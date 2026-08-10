@@ -480,7 +480,7 @@ async function doTranslate() {
         'Content-Type': 'application/json',
         'x-api-key': API_KEY
       },
-      body: JSON.stringify({ text: frText, source: 'fr', target: 'bm' })
+      body: JSON.stringify({ text: frText, source: 'fra_Latn', target: 'bam_Latn' })
     });
     const d = await r.json();
     bambaraText = d.translation || d.text || d.result || JSON.stringify(d);
@@ -666,7 +666,7 @@ async function processAsrAudio(blob) {
     const trRes = await fetch(`${BASE}/translate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
-      body: JSON.stringify({ text: bmText, source: 'bm', target: 'fr' })
+      body: JSON.stringify({ text: bmText, source: 'bam_Latn', target: 'fra_Latn' })
     });
     const trData = await trRes.json();
     const frText = trData.translation || trData.text || trData.result || '';
