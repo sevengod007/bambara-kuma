@@ -525,10 +525,28 @@ async function speakBambara() {
       body: JSON.stringify({ text: bambaraText })
     });
 
-    if (!r.ok) throw new Error(`TTS错误 ${r.status}`);
+    if (!r.ok) {
+      const errText = await r.text();
+      throw new Error(`TTS错误 ${r.status}: ${errText}`);
+    }
 
-    const blob = await r.blob();
-    const url = URL.createObjectURL(blob);
+    // Handle both binary audio and JSON base64 response
+    const contentType = r.headers.get('content-type') || '';
+    let url;
+    if (contentType.includes('application/json')) {
+      const data = await r.json();
+      // Try common fields: audio, audioContent, audio_content, data
+      const b64 = data.audio || data.audioContent || data.audio_content || data.data || data.result;
+      if (!b64) throw new Error('TTS返回格式未知: ' + JSON.stringify(data).slice(0, 100));
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: 'audio/mpeg' });
+      url = URL.createObjectURL(blob);
+    } else {
+      const blob = await r.blob();
+      url = URL.createObjectURL(blob);
+    }
     currentAudio = new Audio(url);
 
     btn.classList.remove('loading-spin');
