@@ -454,7 +454,7 @@ async function doTranslate() {
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
           max_tokens: 500,
-          system: 'Translate Chinese text to French. Reply with only the French translation, nothing else.',
+          system: 'You are a translator. Output ONLY the French translation of the input. No explanations, no notes, no alternatives, no punctuation changes. Just the translated text and nothing else.',
           messages: [{ role: 'user', content: raw }]
         })
       });
@@ -516,13 +516,18 @@ async function speakBambara() {
   setStatus('busy', '生成班巴拉语语音…');
 
   try {
+    // Djelia TTS v2: requires speaker name in description
     const r = await fetch(`${BASE}/tts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': API_KEY
       },
-      body: JSON.stringify({ text: bambaraText })
+      body: JSON.stringify({
+        text: bambaraText,
+        description: "Moussa speaks naturally and clearly",
+        rate: 1.0
+      })
     });
 
     if (!r.ok) {
@@ -530,23 +535,8 @@ async function speakBambara() {
       throw new Error(`TTS错误 ${r.status}: ${errText}`);
     }
 
-    // Handle both binary audio and JSON base64 response
-    const contentType = r.headers.get('content-type') || '';
-    let url;
-    if (contentType.includes('application/json')) {
-      const data = await r.json();
-      // Try common fields: audio, audioContent, audio_content, data
-      const b64 = data.audio || data.audioContent || data.audio_content || data.data || data.result;
-      if (!b64) throw new Error('TTS返回格式未知: ' + JSON.stringify(data).slice(0, 100));
-      const binary = atob(b64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      const blob = new Blob([bytes], { type: 'audio/mpeg' });
-      url = URL.createObjectURL(blob);
-    } else {
-      const blob = await r.blob();
-      url = URL.createObjectURL(blob);
-    }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
     currentAudio = new Audio(url);
 
     btn.classList.remove('loading-spin');
@@ -696,7 +686,7 @@ async function processAsrAudio(blob) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 300,
-        system: 'Translate French to Chinese. Reply with only the Chinese translation.',
+        system: 'You are a translator. Output ONLY the Chinese translation of the input. No explanations, no notes, no alternatives. Just the translated text and nothing else.',
         messages: [{ role: 'user', content: frText }]
       })
     });
