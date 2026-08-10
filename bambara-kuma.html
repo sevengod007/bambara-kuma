@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Bambara Kuma</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0D1117;
+    --surface: #161B22;
+    --border: #21262D;
+    --accent: #D4A017;
+    --accent2: #C4703A;
+    --text: #E6EDF3;
+    --muted: #7D8590;
+    --green: #3FB950;
+    --red: #F85149;
+    --blue: #58A6FF;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .header-icon {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .header-title { font-size: 16px; font-weight: 600; }
+  .header-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  /* Mode tabs */
+  .mode-tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .mode-tab {
+    flex: 1;
+    padding: 10px 8px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+  }
+  .mode-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* Main area */
+  .main { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+  /* Lang switcher */
+  .lang-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .lang-btn {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color .2s;
+  }
+  .lang-btn.active { border-color: var(--accent); color: var(--accent); }
+  .swap-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 36px; height: 36px;
+    color: var(--muted);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+    flex-shrink: 0;
+  }
+  .swap-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Input box */
+  .input-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .input-box textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    padding: 14px;
+    resize: none;
+    outline: none;
+    min-height: 100px;
+  }
+  .input-box textarea::placeholder { color: var(--border); }
+  .input-footer {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    border-top: 1px solid var(--border);
+    gap: 8px;
+  }
+  .char-count { font-size: 11px; color: var(--muted); margin-left: auto; font-family: 'IBM Plex Mono', monospace; }
+
+  /* Translate button */
+  .translate-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 13px;
+    cursor: pointer;
+    transition: opacity .2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .translate-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .translate-btn:active:not(:disabled) { opacity: .85; }
+
+  /* Output box */
+  .output-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .output-label {
+    font-size: 11px;
+    color: var(--muted);
+    padding: 10px 14px 0;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+  }
+  .output-text {
+    padding: 10px 14px 14px;
+    font-size: 17px;
+    line-height: 1.6;
+    min-height: 60px;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+  .output-text.empty { color: var(--border); font-style: italic; font-size: 14px; }
+  .output-text.loading { color: var(--muted); }
+  .output-footer {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    border-top: 1px solid var(--border);
+    gap: 8px;
+  }
+
+  /* Icon buttons */
+  .icon-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    width: 34px; height: 34px;
+    color: var(--muted);
+    font-size: 15px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .icon-btn.playing { border-color: var(--green); color: var(--green); }
+  .icon-btn.loading-spin { animation: spin .8s linear infinite; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Mic button — big */
+  .mic-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+  }
+  .mic-btn-big {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    color: var(--muted);
+    font-size: 28px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .25s;
+  }
+  .mic-btn-big.listening {
+    background: var(--accent2);
+    border-color: var(--accent2);
+    color: #fff;
+    animation: pulse 1.2s ease infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(196,112,58,.5); }
+    50% { box-shadow: 0 0 0 14px rgba(196,112,58,0); }
+  }
+  .mic-label { font-size: 13px; color: var(--muted); text-align: center; }
+  .mic-label.active { color: var(--accent2); }
+
+  /* ASR result */
+  .asr-result {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .asr-result-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
+  .asr-bm { font-size: 16px; color: var(--text); margin-bottom: 6px; min-height: 24px; }
+  .asr-divider { height: 1px; background: var(--border); margin: 8px 0; }
+  .asr-translated { font-size: 14px; color: var(--blue); min-height: 20px; }
+
+  /* Status bar */
+  .status-bar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+  .status-dot.error { background: var(--red); }
+  .status-dot.busy { background: var(--accent); animation: blink .7s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #333;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all .3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon">🌍</div>
+    <div>
+      <div class="header-title">Bambara Kuma</div>
+      <div class="header-sub">班巴拉语实时翻译</div>
+    </div>
+  </div>
+</div>
+
+<div class="mode-tabs">
+  <div class="mode-tab active" onclick="switchMode('speak')">🗣 我来说话</div>
+  <div class="mode-tab" onclick="switchMode('listen')">👂 听对方说</div>
+</div>
+
+<div class="main">
+
+  <!-- ===== MODE: SPEAK (中文/法语 → 班巴拉语) ===== -->
+  <div id="mode-speak">
+    <div class="lang-row">
+      <button class="lang-btn active" id="btn-zh" onclick="setSrcLang('zh')">中文</button>
+      <button class="lang-btn" id="btn-fr" onclick="setSrcLang('fr')">Français</button>
+      <button class="swap-btn" title="互换" onclick="swapLangs()">⇄</button>
+      <button class="lang-btn" style="pointer-events:none;border-color:#D4A017;color:#D4A017;">Bambara</button>
+    </div>
+
+    <div class="input-box">
+      <textarea id="input-text" placeholder="输入要翻译的内容…" oninput="updateCount()" rows="4"></textarea>
+      <div class="input-footer">
+        <button class="icon-btn" id="mic-input-btn" onclick="toggleInputMic()" title="语音输入">🎙</button>
+        <button class="icon-btn" onclick="clearInput()" title="清除">✕</button>
+        <span class="char-count" id="char-count">0</span>
+      </div>
+    </div>
+
+    <button class="translate-btn" id="translate-btn" onclick="doTranslate()">
+      <span id="translate-btn-text">翻译成班巴拉语</span>
+    </button>
+
+    <div class="output-box">
+      <div class="output-label">班巴拉语 · Bamanankan</div>
+      <div class="output-text empty" id="output-text">翻译结果将显示在这里…</div>
+      <div class="output-footer">
+        <button class="icon-btn" id="speak-btn" onclick="speakBambara()" title="朗读班巴拉语">🔊</button>
+        <button class="icon-btn" onclick="copyOutput()" title="复制">📋</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODE: LISTEN (班巴拉语 → 中文) ===== -->
+  <div id="mode-listen" class="hidden">
+    <div class="mic-wrap">
+      <button class="mic-btn-big" id="asr-mic-btn" onclick="toggleAsrMic()">🎙</button>
+      <div class="mic-label" id="asr-mic-label">按下录音，听对方说班巴拉语</div>
+    </div>
+
+    <div class="asr-result">
+      <div class="asr-result-label">识别结果</div>
+      <div class="asr-bm" id="asr-bm-text">—</div>
+      <div class="asr-divider"></div>
+      <div class="asr-result-label">中文翻译</div>
+      <div class="asr-translated" id="asr-zh-text">—</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="status-bar">
+  <div class="status-dot" id="status-dot"></div>
+  <span id="status-text">就绪 · Djelia AI</span>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_KEY = '02388ac6-753f-4c6d-b5ca-2f08e0985181';
+const BASE = 'https://djelia.cloud/api/v1/models';
+
+let currentMode = 'speak';
+let srcLang = 'zh';
+let bambaraText = '';
+let inputMicRecognition = null;
+let isInputListening = false;
+let asrMediaRecorder = null;
+let asrChunks = [];
+let isAsrRecording = false;
+let currentAudio = null;
+
+// ── Utilities ─────────────────────────────────────────
+function setStatus(state, msg) {
+  document.getElementById('status-dot').className = 'status-dot' + (state !== 'ok' ? ' ' + state : '');
+  document.getElementById('status-text').textContent = msg;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && mode === 'speak') || (i === 1 && mode === 'listen'));
+  });
+  document.getElementById('mode-speak').classList.toggle('hidden', mode !== 'speak');
+  document.getElementById('mode-listen').classList.toggle('hidden', mode !== 'listen');
+}
+
+function setSrcLang(lang) {
+  srcLang = lang;
+  document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
+  document.getElementById('btn-fr').classList.toggle('active', lang === 'fr');
+  document.getElementById('input-text').placeholder = lang === 'zh' ? '输入要翻译的内容…' : 'Saisir le texte à traduire…';
+}
+
+function swapLangs() {
+  setSrcLang(srcLang === 'zh' ? 'fr' : 'zh');
+}
+
+function clearInput() {
+  document.getElementById('input-text').value = '';
+  document.getElementById('output-text').textContent = '翻译结果将显示在这里…';
+  document.getElementById('output-text').className = 'output-text empty';
+  bambaraText = '';
+  updateCount();
+}
+
+function updateCount() {
+  document.getElementById('char-count').textContent = document.getElementById('input-text').value.length;
+}
+
+function copyOutput() {
+  if (!bambaraText) return;
+  navigator.clipboard.writeText(bambaraText).then(() => showToast('已复制 ✓'));
+}
+
+// ── Translate: Chinese/French → Bambara via Djelia ───
+async function doTranslate() {
+  const raw = document.getElementById('input-text').value.trim();
+  if (!raw) return;
+
+  // If Chinese, use Claude to translate to French first, then Djelia for Bambara
+  let frText = raw;
+  if (srcLang === 'zh') {
+    setStatus('busy', '中文 → 法语…');
+    document.getElementById('translate-btn').disabled = true;
+    document.getElementById('translate-btn-text').textContent = '翻译中…';
+    try {
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 500,
+          system: 'Translate Chinese text to French. Reply with only the French translation, nothing else.',
+          messages: [{ role: 'user', content: raw }]
+        })
+      });
+      const d = await r.json();
+      frText = d.content?.map(b => b.text || '').join('').trim();
+    } catch(e) {
+      setStatus('error', '中文翻译失败');
+      document.getElementById('translate-btn').disabled = false;
+      document.getElementById('translate-btn-text').textContent = '翻译成班巴拉语';
+      return;
+    }
+  }
+
+  // Djelia: French → Bambara
+  setStatus('busy', '法语 → 班巴拉语…');
+  document.getElementById('output-text').textContent = '翻译中…';
+  document.getElementById('output-text').className = 'output-text loading';
+
+  try {
+    const r = await fetch(`${BASE}/translate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY
+      },
+      body: JSON.stringify({ text: frText, source: 'fr', target: 'bm' })
+    });
+    const d = await r.json();
+    bambaraText = d.translation || d.text || d.result || JSON.stringify(d);
+    document.getElementById('output-text').textContent = bambaraText;
+    document.getElementById('output-text').className = 'output-text';
+    setStatus('ok', '翻译完成');
+  } catch(e) {
+    document.getElementById('output-text').textContent = '翻译失败，请重试';
+    document.getElementById('output-text').className = 'output-text empty';
+    setStatus('error', e.message);
+  } finally {
+    document.getElementById('translate-btn').disabled = false;
+    document.getElementById('translate-btn-text').textContent = '翻译成班巴拉语';
+  }
+}
+
+// ── TTS: Djelia Bambara voice ─────────────────────────
+async function speakBambara() {
+  if (!bambaraText) return;
+  const btn = document.getElementById('speak-btn');
+
+  // Stop if already playing
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+    btn.classList.remove('playing');
+    btn.textContent = '🔊';
+    return;
+  }
+
+  btn.classList.add('loading-spin');
+  btn.textContent = '⏳';
+  setStatus('busy', '生成班巴拉语语音…');
+
+  try {
+    const r = await fetch(`${BASE}/tts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY
+      },
+      body: JSON.stringify({ text: bambaraText })
+    });
+
+    if (!r.ok) throw new Error(`TTS错误 ${r.status}`);
+
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    currentAudio = new Audio(url);
+
+    btn.classList.remove('loading-spin');
+    btn.classList.add('playing');
+    btn.textContent = '⏹';
+    setStatus('ok', '正在播放…');
+
+    currentAudio.onended = () => {
+      btn.classList.remove('playing');
+      btn.textContent = '🔊';
+      currentAudio = null;
+      setStatus('ok', '就绪 · Djelia AI');
+    };
+
+    await currentAudio.play();
+
+  } catch(e) {
+    btn.classList.remove('loading-spin', 'playing');
+    btn.textContent = '🔊';
+    setStatus('error', 'TTS失败: ' + e.message);
+    showToast('语音生成失败，请重试');
+  }
+}
+
+// ── Voice input (Chinese/French speech → text) ────────
+function toggleInputMic() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('浏览器不支持语音，请用Chrome');
+    return;
+  }
+  if (isInputListening) {
+    inputMicRecognition?.stop();
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  inputMicRecognition = new SR();
+  inputMicRecognition.lang = srcLang === 'zh' ? 'zh-CN' : 'fr-FR';
+  inputMicRecognition.interimResults = false;
+
+  const btn = document.getElementById('mic-input-btn');
+
+  inputMicRecognition.onstart = () => {
+    isInputListening = true;
+    btn.textContent = '🔴';
+    setStatus('busy', '录音中…');
+  };
+  inputMicRecognition.onresult = (e) => {
+    document.getElementById('input-text').value = e.results[0][0].transcript;
+    updateCount();
+  };
+  inputMicRecognition.onend = () => {
+    isInputListening = false;
+    btn.textContent = '🎙';
+    setStatus('ok', '就绪 · Djelia AI');
+    const txt = document.getElementById('input-text').value.trim();
+    if (txt) doTranslate();
+  };
+  inputMicRecognition.onerror = () => {
+    isInputListening = false;
+    btn.textContent = '🎙';
+    setStatus('error', '语音识别失败');
+  };
+  inputMicRecognition.start();
+}
+
+// ── ASR: Record Bambara → Djelia transcribe → translate to Chinese ──
+async function toggleAsrMic() {
+  if (isAsrRecording) {
+    asrMediaRecorder?.stop();
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    asrChunks = [];
+    asrMediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+
+    const btn = document.getElementById('asr-mic-btn');
+    const label = document.getElementById('asr-mic-label');
+
+    asrMediaRecorder.ondataavailable = e => { if (e.data.size > 0) asrChunks.push(e.data); };
+
+    asrMediaRecorder.onstart = () => {
+      isAsrRecording = true;
+      btn.classList.add('listening');
+      label.textContent = '录音中… 再按停止';
+      label.classList.add('active');
+      setStatus('busy', '录音中…');
+    };
+
+    asrMediaRecorder.onstop = async () => {
+      isAsrRecording = false;
+      btn.classList.remove('listening');
+      label.textContent = '处理中…';
+      stream.getTracks().forEach(t => t.stop());
+
+      const blob = new Blob(asrChunks, { type: 'audio/webm' });
+      await processAsrAudio(blob);
+
+      label.textContent = '按下录音，听对方说班巴拉语';
+      label.classList.remove('active');
+    };
+
+    asrMediaRecorder.start();
+
+  } catch(e) {
+    showToast('无法访问麦克风');
+    setStatus('error', '麦克风权限被拒绝');
+  }
+}
+
+async function processAsrAudio(blob) {
+  setStatus('busy', '识别班巴拉语…');
+  document.getElementById('asr-bm-text').textContent = '识别中…';
+  document.getElementById('asr-zh-text').textContent = '—';
+
+  try {
+    // Step 1: Djelia ASR (Bambara transcription)
+    const formData = new FormData();
+    formData.append('file', blob, 'recording.webm');
+
+    const asrRes = await fetch(`${BASE}/transcribe`, {
+      method: 'POST',
+      headers: { 'x-api-key': API_KEY },
+      body: formData
+    });
+
+    if (!asrRes.ok) throw new Error(`ASR错误 ${asrRes.status}`);
+    const asrData = await asrRes.json();
+    const bmText = asrData.transcription || asrData.text || asrData.result || JSON.stringify(asrData);
+    document.getElementById('asr-bm-text').textContent = bmText;
+
+    // Step 2: Djelia translate Bambara → French
+    setStatus('busy', '班巴拉语 → 中文…');
+    const trRes = await fetch(`${BASE}/translate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
+      body: JSON.stringify({ text: bmText, source: 'bm', target: 'fr' })
+    });
+    const trData = await trRes.json();
+    const frText = trData.translation || trData.text || trData.result || '';
+
+    // Step 3: Claude translate French → Chinese
+    const clRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 300,
+        system: 'Translate French to Chinese. Reply with only the Chinese translation.',
+        messages: [{ role: 'user', content: frText }]
+      })
+    });
+    const clData = await clRes.json();
+    const zhText = clData.content?.map(b => b.text || '').join('').trim();
+    document.getElementById('asr-zh-text').textContent = zhText;
+    setStatus('ok', '翻译完成');
+
+  } catch(e) {
+    document.getElementById('asr-bm-text').textContent = '识别失败';
+    document.getElementById('asr-zh-text').textContent = '请重试';
+    setStatus('error', e.message);
+  }
+}
+
+// Enter shortcut
+document.getElementById('input-text').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) doTranslate();
+});
+</script>
+</body>
+</html>
