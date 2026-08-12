@@ -354,10 +354,10 @@ async function playTTS(text, btnEl) {
   setStatus('busy', 'Génération audio…');
 
   try {
-    const r = await fetch(`${BASE}/tts`, {
+    const r = await fetch(`${BASE}/tts?version=v2`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
-      body: JSON.stringify({ text, speaker: 'Moussa', model: 'v2' })
+      body: JSON.stringify({ text, description: 'Moussa speaks clearly and naturally', rate: 1.0 })
     });
     if (!r.ok) throw new Error('TTS ' + r.status + ': ' + await r.text());
     const blob = await r.blob();
@@ -370,7 +370,9 @@ async function playTTS(text, btnEl) {
   } catch(e) {
     btnEl.textContent = '🔊';
     setStatus('error', e.message);
-    alert('Erreur TTS complète:\n' + e.message);
+    // Show full error on page
+    document.getElementById('output-text').textContent = '❌ ' + e.message;
+    document.getElementById('output-text').className = 'output-text';
   }
 }
 function doTTS() { playTTS(bambaraResult, document.getElementById('tts-btn')); }
