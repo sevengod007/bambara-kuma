@@ -202,6 +202,12 @@
       Traduire en Bamanankan
     </button>
 
+    <div class="lang-row" style="margin-top:-4px">
+      <button class="lang-btn active" id="spk-moussa" onclick="setSpeaker('Moussa')">Moussa</button>
+      <button class="lang-btn" id="spk-sekou" onclick="setSpeaker('Sekou')">Sekou</button>
+      <button class="lang-btn" id="spk-seydou" onclick="setSpeaker('Seydou')">Seydou</button>
+    </div>
+
     <div class="output-box">
       <div class="output-label">Bamanankan</div>
       <div class="output-text empty" id="output-text">La traduction apparaîtra ici…</div>
@@ -261,6 +267,14 @@ let isInputListening = false;
 let asrRecorder = null;
 let asrChunks = [];
 let isAsrRecording = false;
+let currentSpeaker = 'Moussa';
+
+function setSpeaker(name) {
+  currentSpeaker = name;
+  ['Moussa','Sekou','Seydou'].forEach(s => {
+    document.getElementById('spk-' + s.toLowerCase()).classList.toggle('active', s === name);
+  });
+}
 
 // ── UI helpers ────────────────────────────────────────
 function setStatus(state, msg) {
@@ -354,13 +368,22 @@ async function playTTS(text, btnEl) {
   setStatus('busy', 'Génération audio…');
 
   try {
-    const r = await fetch(`${BASE}/tts/v2`, {
+    const r = await fetch('https://djelia.cloud/api/v2/models/tts/stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
-      body: JSON.stringify({ text, description: 'Moussa speaks clearly and naturally', rate: 1.0 })
+      body: JSON.stringify({ text, description: currentSpeaker + ' speaks with a very clear voice and a friendly tone', chunk_size: 0.5 })
     });
     if (!r.ok) throw new Error('TTS ' + r.status + ': ' + await r.text());
-    const blob = await r.blob();
+    const contentType = r.headers.get('content-type') || '';
+    // Collect all streamed chunks then play
+    const reader = r.body.getReader();
+    const chunks = [];
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) chunks.push(value);
+    }
+    const blob = new Blob(chunks, { type: 'audio/wav' });
     const url = URL.createObjectURL(blob);
     currentAudio = new Audio(url);
     btnEl.classList.add('playing'); btnEl.textContent = '⏹';
