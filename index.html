@@ -459,28 +459,17 @@ async function processAsr(blob, ext) {
   document.getElementById('asr-tgt').textContent = '—';
 
   try {
-    // Step 1: Djelia ASR — transcribe Bambara audio
+    // Step 1: Djelia ASR v2 — transcribe Bambara + translate directly
     const form = new FormData();
     form.append('file', blob, `recording.${ext}`);
-    const r1 = await fetch(`${BASE}/transcribe`, { method: 'POST', headers: { 'x-api-key': API_KEY }, body: form });
-    if (!r1.ok) throw new Error('ASR ' + r1.status + ': ' + (await r1.text()).slice(0,100));
+    const tgtParam = asrLang === 'fr' ? 'translate_to_french=true' : 'translate_to_english=true';
+    const r1 = await fetch(`https://djelia.cloud/api/v2/models/transcribe?${tgtParam}`, { method: 'POST', headers: { 'x-api-key': API_KEY }, body: form });
+    if (!r1.ok) throw new Error('ASR ' + r1.status + ': ' + (await r1.text()).slice(0,200));
     const d1 = await r1.json();
-    // Handle segment array or plain text
-    asrBambaraText = Array.isArray(d1) ? d1.map(s => s.text).join(' ') : (d1.transcription || d1.text || d1.result || JSON.stringify(d1));
+    asrBambaraText = Array.isArray(d1) ? d1.map(s => s.text || s.transcription || '').join(' ') : (d1.transcription || d1.text || d1.result || JSON.stringify(d1));
+    const translated = Array.isArray(d1) ? d1.map(s => s.translation || s.translated_text || '').join(' ') : (d1.translation || d1.translated_text || d1.french || '');
     document.getElementById('asr-bm').textContent = asrBambaraText;
-
-    // Step 2: Djelia translate Bambara → FR or EN
-    setStatus('busy', 'Traduction…');
-    const tgtCode = asrLang === 'fr' ? 'fra_Latn' : 'eng_Latn';
-    const r2 = await fetch(`${BASE}/translate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
-      body: JSON.stringify({ text: asrBambaraText, source: 'bam_Latn', target: tgtCode })
-    });
-    if (!r2.ok) throw new Error('Traduction ' + r2.status);
-    const d2 = await r2.json();
-    const translated = d2.translation || d2.text || d2.result || '';
-    document.getElementById('asr-tgt').textContent = translated;
+    document.getElementById('asr-tgt').textContent = translated || asrBambaraText;
     setStatus('ok', 'Terminé');
   } catch(e) {
     document.getElementById('asr-bm').textContent = 'Échec';
