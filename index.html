@@ -354,7 +354,7 @@ async function playTTS(text, btnEl) {
   setStatus('busy', 'Génération audio…');
 
   try {
-    const r = await fetch(`${BASE}/tts?version=v2`, {
+    const r = await fetch(`${BASE}/tts/v2`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
       body: JSON.stringify({ text, description: 'Moussa speaks clearly and naturally', rate: 1.0 })
